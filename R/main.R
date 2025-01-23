@@ -41,6 +41,11 @@ retrieve_code_selection <- function() {
 #' @return NULL; the gadget is launched in the RStudio viewer pane. The user can
 #'  edit the selected code and save or cancel the changes.
 #' @export
+#' Launch a gadget to document selected code
+#'
+#' @return NULL; the gadget is launched in the RStudio viewer pane. The user can
+#'  edit the selected code and save or cancel the changes.
+#' @export
 document_gadget <- function() {
   # Retrieve the selected code and its position
   selection <- retrieve_code_selection()
@@ -50,10 +55,10 @@ document_gadget <- function() {
   ui <- bslib::page_fluid(
     theme = bslib::bs_theme(version = 5),
     bslib::card(
-      bslib::card_header("Edit Selected Code"),
+      bslib::card_header("documentWithPrompt"),
       bslib::card_body(
         shiny::textAreaInput(
-          "code_editor", "Edit your code:",
+          "code_editor", "Edit:",
           value = selection$code, rows = 10, width = "100%"
         )
       ),
@@ -81,6 +86,18 @@ document_gadget <- function() {
       shiny::stopApp()
     })
   }
-
-  shiny::runGadget(ui, server, viewer = shiny::dialogViewer("Edit Code", width = 1200, height = 1600))
+  # Safely run the gadget
+  tryCatch(
+    {
+      shiny::runGadget(
+        ui,
+        server,
+        viewer = shiny::dialogViewer("documentWithPrompt", width = 1200, height = 1600),
+        stopOnCancel = TRUE
+      )
+    },
+    error = function(e) {
+      message("The gadget was closed without saving or canceling.")
+    }
+  )
 }
