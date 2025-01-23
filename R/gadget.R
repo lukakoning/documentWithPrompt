@@ -1,3 +1,7 @@
+#' Launch a gadget to document code with LLMs
+#'
+#' @return NULL; this function is called for its side effects (launching the gadget)
+#' @export
 document_gadget <- function() {
   selection <- retrieve_code_selection()
   if (is.null(selection)) return(invisible(NULL))
@@ -37,7 +41,7 @@ document_gadget <- function() {
           "Edit Code:",
           value = selection$code,
           mode = "r",
-          theme = rstudioapi::getThemeInfo()$theme,
+          # theme = rstudioapi::getThemeInfo()$editor,
           height = "600px",
           fontSize = 14,
           wordWrap = TRUE

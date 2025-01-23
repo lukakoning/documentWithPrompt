@@ -1,4 +1,6 @@
-send_prompt_to_api <- function(prompt) {
+send_prompt_to_api <- function(
+    prompt, llm_provider = getOption("documentWithPrompt.llm_provider", default = tidyprompt::llm_provider_openai())
+) {
   # Check if there is a OpenAI API key
   if (Sys.getenv("OPENAI_API_KEY") == "") {
     warning(
@@ -8,9 +10,7 @@ send_prompt_to_api <- function(prompt) {
     return(invisible(NULL))
   }
 
-  llm <- tidyprompt::llm_provider_openai()
-
   prompt |>
-    tidyprompt::send_prompt(llm) |>
+    tidyprompt::send_prompt(llm_provider) |>
     tidyprompt::extract_from_return_list("extracted_code")
 }
