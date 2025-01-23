@@ -1,0 +1,4 @@
+Name: documentWithPrompt
+Description: Opens a window with features to document the selected code using large language models.
+Binding: document_gadget
+Interactive: true
