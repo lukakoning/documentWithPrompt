@@ -12,5 +12,10 @@ LazyData: true
 RoxygenNote: 7.3.2
 Imports: 
     bslib,
+    clipr,
+    glue,
     rstudioapi,
-    shiny
+    shiny,
+    shinyAce,
+    stringr,
+    tidyprompt
