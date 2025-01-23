@@ -29,9 +29,10 @@ The process is as follows:
     selected code, and instructions on how to document it. You can also
     copy the code and open MS Copilot, or open MS Copilot with the
     prompt prepulated (prompt is passed in the URL; may only work for
-    shorter prompts). Alternatively, you can directly send the prompt to
-    an LLM provider API after which the add-in will insert the returned
-    documentation into the editor.
+    shorter prompts). You can then use the LLM reply and paste it back
+    into the editor. Alternatively, you can send the prompt to an LLM
+    provider API after which the add-in will automatically insert the
+    returned documentation into the editor.
 
 4)  If you are happy with the edited code, you can click ‘Save’ to save
     the changes to your script. If not, you can just press ‘Cancel’ and
@@ -50,7 +51,7 @@ Such features may be added in the future.
 ## Installation
 
 You can install the development version of documentWithPrompt from
-[GitHub](https://github.com/) with:
+\[GitHub\](<https://github.com/lukakoning/documentWithPrompt> with:
 
 ``` r
 remotes::install_github("lukakoning/documentWithPrompt")
