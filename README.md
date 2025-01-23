@@ -58,7 +58,7 @@ options(documentWithPrompt.llm_provider = tidyprompt::llm_provider_ollama())
 ## Installation
 
 You can install the development version of documentWithPrompt from
-\[GitHub\](<https://github.com/lukakoning/documentWithPrompt> with:
+[GitHub](https://github.com/lukakoning/documentWithPrompt) with:
 
 ``` r
 remotes::install_github("lukakoning/documentWithPrompt")
