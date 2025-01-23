@@ -2,14 +2,17 @@
 % Please edit documentation in R/retrieve_code_selection.R
 \name{retrieve_code_selection}
 \alias{retrieve_code_selection}
-\title{Retrieve the selected code from the source editor}
+\title{Retrieve the selected code from the source editor
+capturing original indentation, but removing only the common prefix}
 \usage{
 retrieve_code_selection()
 }
 \value{
-A list with the context, range, and code of the selected code
+A list with the context, range, code (shifted but preserving relative
+        indentation), and details to let us re‐add the original indentation
 }
 \description{
 Retrieve the selected code from the source editor
+capturing original indentation, but removing only the common prefix
 }
 \keyword{internal}

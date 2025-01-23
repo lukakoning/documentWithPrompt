@@ -18,4 +18,8 @@ Imports:
     shiny,
     shinyAce,
     stringr,
-    tidyprompt
+    tidyprompt,
+    utils
+Suggests: 
+    callr,
+    skimr
