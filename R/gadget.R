@@ -2,7 +2,7 @@
 #'
 #' @return NULL; this function is called for its side effects (launching the gadget)
 #' @export
-document_gadget <- function() {
+gadget <- function() {
   selection <- retrieve_code_selection()
   if (is.null(selection)) return(invisible(NULL))
 
