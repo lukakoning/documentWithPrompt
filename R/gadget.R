@@ -59,7 +59,7 @@ document_gadget <- function() {
             ),
             placement = "bottom"
           ),
-        shiny::actionButton("prepopulate_ms", "Prepopulate MS Copilot") |>
+        shiny::actionButton("prepopulate_ms", "Open MS Copilot with prompt") |>
           bslib::tooltip(
             paste0(
               "Open MS Copilot, automatically entering the prompt (passed in URL).",
@@ -70,9 +70,7 @@ document_gadget <- function() {
         shiny::actionButton("send_prompt_llm", "Send prompt to API & auto-edit") |>
           bslib::tooltip(
             paste0(
-              "Send the prompt to the LLM API, and automatically enter the response in the code editor.",
-              " This is a demo version, so it only works with OpenAI at the moment.",
-              " Will add support for other providers (including local) later."
+              "Send the prompt to the LLM API, and automatically enter the response in the code editor."
             ),
             placement = "bottom"
           )
@@ -221,11 +219,22 @@ document_gadget <- function() {
     shiny::observeEvent(input$copy_prompt, {
       prompt <- build_tidyprompt(input$code_editor)
       clipr::write_clip(prompt$construct_prompt_text())
+      shiny::showNotification(
+        "Prompt copied to clipboard!",
+        duration = 2.5,
+        type = "message"
+      )
     })
+
     shiny::observeEvent(input$copy_prompt_open_ms, {
       prompt <- build_tidyprompt(input$code_editor)
       prompt_text <- prompt$construct_prompt_text()
       clipr::write_clip(prompt_text)
+      shiny::showNotification(
+        "Prompt copied to clipboard & opening MS Copilot in browser!",
+        duration = 2.5,
+        type = "message"
+      )
       base_url <- "https://copilot.microsoft.com/"
       utils::browseURL(base_url)
     })
@@ -233,11 +242,17 @@ document_gadget <- function() {
     shiny::observeEvent(input$prepopulate_ms, {
       prompt <- build_tidyprompt(input$code_editor)
       prompt_text <- prompt$construct_prompt_text()
-      encoded_prompt_text <- utils::URLencode(prompt_text)
+      encoded_prompt_text <- utils::URLencode(prompt_text, reserved = TRUE)
 
       # Construct the URL with the encoded prompt
       base_url <- "https://copilot.microsoft.com/"
       full_url <- paste0(base_url, "?q=", encoded_prompt_text)
+
+      shiny::showNotification(
+        "Opening prepopulated MS Copilot in browser!",
+        duration = 2.5,
+        type = "message"
+      )
 
       # Open the URL in the default web browser
       utils::browseURL(full_url)
@@ -245,7 +260,24 @@ document_gadget <- function() {
 
     shiny::observeEvent(input$send_prompt_llm, {
       prompt   <- build_tidyprompt(input$code_editor)
-      new_code <- send_prompt_to_api(prompt)
+
+      shiny::showNotification(
+        "Sending to LLM API! Please wait...",
+        duration = 2.5,
+        type = "message"
+      )
+
+      new_code <- tryCatch({
+        send_prompt_to_api(prompt)
+      }, error = function(e) {
+        shiny::showNotification(
+          "Error sending prompt to API.",
+          duration = 2.5,
+          type = "error"
+        )
+        NULL
+      })
+
       if (is.null(new_code)) return(invisible(NULL))
 
       # "Shift" the new code so it's consistent in the editor
@@ -258,6 +290,12 @@ document_gadget <- function() {
       # For example, if you want to keep things flush:
       reindented <- reindent_code(new_code, "")
       shinyAce::updateAceEditor(session, "code_editor", value = reindented)
+
+      shiny::showNotification(
+        "Editor updated with response from LLM API!",
+        duration = 2.5,
+        type = "message"
+      )
     })
 
     shiny::observeEvent(input$cancel, {
@@ -267,11 +305,13 @@ document_gadget <- function() {
 
   tryCatch(
     {
-      shiny::runGadget(
-        ui,
-        server,
-        viewer = shiny::dialogViewer("documentWithPrompt", width = 1200, height = 1600),
-        stopOnCancel = TRUE
+      suppressMessages(
+        shiny::runGadget(
+          ui,
+          server,
+          viewer = shiny::dialogViewer("documentWithPrompt", width = 1200, height = 1600),
+          stopOnCancel = TRUE
+        )
       )
     },
     error = function(e) {
