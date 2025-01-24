@@ -6,7 +6,9 @@ document_gadget <- function() {
   selection <- retrieve_code_selection()
   if (is.null(selection)) return(invisible(NULL))
 
-  ui <- bslib::page_fluid(
+  #### UI #####################################################################
+
+  gadget_ui <- bslib::page_fluid(
     theme = bslib::bs_theme(version = 5),
     bslib::card(
       bslib::card_header(
@@ -57,7 +59,7 @@ document_gadget <- function() {
           bslib::tooltip(
             paste0(
               "Copy the prompt to the clipboard, and open MS Copilot",
-              " (without a prepopulated prompt; you can then paste it there)."
+              " (you can then paste the prompt there)."
             ),
             placement = "bottom"
           ),
@@ -65,14 +67,14 @@ document_gadget <- function() {
           bslib::tooltip(
             paste0(
               "Open MS Copilot, automatically entering the prompt (passed in URL).",
-              " May not always work; only seems to work for shorter prompts (there is a length limit)."
+              " May not always work."
             ),
             placement = "bottom"
           ),
         shiny::actionButton("send_prompt_llm", "Send prompt to API & auto-edit") |>
           bslib::tooltip(
             paste0(
-              "Send the prompt to the LLM API, and automatically enter the response in the code editor."
+              "Send the prompt to the LLM API; automatically enter the response in the code editor."
             ),
             placement = "bottom"
           )
@@ -87,96 +89,17 @@ document_gadget <- function() {
     )
   )
 
-  server <- function(input, output, session) {
 
-    # Re-add the common prefix to each line upon saving
-    reindent_code <- function(edited_code, common_prefix) {
-      new_lines <- strsplit(edited_code, "\n")[[1]]
-      # For each line:
-      #  1. we figure out how much whitespace is actually leading now
-      #  2. we re-add the previously removed `common_prefix` at the front
-      reindented <- vapply(
-        new_lines,
-        function(line) {
-          paste0(common_prefix, line)
-        },
-        character(1)
-      )
-      paste(reindented, collapse = "\n")
-    }
 
-    # Named char vector: names = "original quoted string", value = "placeholder"
-    redacted_strings <- shiny::reactiveVal(character(0))
+  #### Server ##################################################################
 
-    # Helper: Check if a string is already a redacted placeholder
-    is_placeholder <- function(x) {
-      grepl('^["\']__redacted\\d+__["\']$', x)
-    }
+  gadget_server <- function(input, output, session) {
 
-    # 1) Redact function
-    redact_strings <- function(code) {
-      old_map <- redacted_strings()
+    # A reactiveVal storing the "string -> placeholder" map
+    redacted_strings_map <- shiny::reactiveVal(character(0))
 
-      # Regex to capture any single- or double-quoted strings:
-      string_pattern <- '"[^"]*"|\'[^\']*\''
-      matches <- regmatches(code, gregexpr(string_pattern, code))
-      all_found <- unique(unlist(matches))
-
-      if (length(all_found) == 0) {
-        # No quoted strings at all; nothing to do
-        return(code)
-      }
-
-      # Next ID to use starts after however many placeholders we already have
-      next_id <- length(old_map) + 1
-
-      # 1a) Separate placeholders vs. genuine strings
-      placeholders <- all_found[ vapply(all_found, is_placeholder, logical(1)) ]
-      genuine_strings <- setdiff(all_found, placeholders)
-
-      # 1b) For each genuine string found:
-      #     - If it’s already in old_map, keep the same placeholder
-      #     - Else create a new placeholder
-      new_map <- old_map
-      for (str in genuine_strings) {
-        if (!str %in% names(new_map)) {
-          # Assign a new placeholder with the next ID
-          new_map[str] <- paste0("\"__redacted", next_id, "__\"")
-          next_id <- next_id + 1
-        }
-      }
-
-      # 2) Replace all genuine_strings in the code with placeholders from new_map
-      redacted_code <- code
-      for (str in genuine_strings) {
-        placeholder <- new_map[[str]]
-        redacted_code <- gsub(str, placeholder, redacted_code, fixed = TRUE)
-      }
-
-      # Update the reactive map
-      redacted_strings(new_map)
-
-      redacted_code
-    }
-
-    # 2) Unredact function
-    unredact_strings <- function(code) {
-      current_map <- redacted_strings()
-      if (length(current_map) == 0) {
-        return(code)
-      }
-      # For each original -> placeholder, revert code
-      unredacted_code <- code
-      for (original_str in names(current_map)) {
-        placeholder_str <- current_map[[original_str]]
-        unredacted_code <- gsub(placeholder_str, original_str, unredacted_code, fixed = TRUE)
-      }
-      unredacted_code
-    }
-
-    # --- Observe button clicks ---
     shiny::observeEvent(input$redact, {
-      new_code <- redact_strings(input$code_editor)
+      new_code <- redact_strings(input$code_editor, redacted_strings_map)
 
       if (identical(new_code, input$code_editor)) {
         shiny::showNotification(
@@ -196,7 +119,7 @@ document_gadget <- function() {
     })
 
     shiny::observeEvent(input$unredact, {
-      new_code <- unredact_strings(input$code_editor)
+      new_code <- unredact_strings(input$code_editor, redacted_strings_map)
 
       if (identical(new_code, input$code_editor)) {
         shiny::showNotification(
@@ -217,7 +140,7 @@ document_gadget <- function() {
 
     shiny::observeEvent(input$reset, {
       # Optionally clear the map when resetting
-      redacted_strings(character(0))
+      redacted_strings_map(character(0))
       shinyAce::updateAceEditor(session, "code_editor", value = selection$code)
       shiny::showNotification(
         "Editor reset to original code",
@@ -227,10 +150,7 @@ document_gadget <- function() {
     })
 
     shiny::observeEvent(input$clear, {
-      # Clear editor. Keep or clear map as you like
-      # If you want to allow re-redacting when you refill code, you might keep the map.
-      # Or you can reset it if you'd like a blank slate:
-      # redacted_strings(character(0))
+      # Clear editor (keep or clear map as you like)
       shinyAce::updateAceEditor(session, "code_editor", value = "")
     })
 
@@ -247,14 +167,13 @@ document_gadget <- function() {
             id = selection$context$id
           )
         }
-
         shiny::stopApp()
       }
       on_save()
     })
 
     shiny::observeEvent(input$copy_prompt, {
-      prompt <- build_tidyprompt(input$code_editor)
+      prompt <- build_prompt(input$code_editor)
       clipr::write_clip(prompt$construct_prompt_text())
       shiny::showNotification(
         "Prompt copied",
@@ -264,7 +183,7 @@ document_gadget <- function() {
     })
 
     shiny::observeEvent(input$copy_prompt_open_ms, {
-      prompt <- build_tidyprompt(input$code_editor)
+      prompt <- build_prompt(input$code_editor)
       prompt_text <- prompt$construct_prompt_text()
       clipr::write_clip(prompt_text)
       shiny::showNotification(
@@ -278,9 +197,9 @@ document_gadget <- function() {
 
     shiny::observeEvent(input$paste, {
       tryCatch({
-        clipboard_content <- clipr::read_clip() # Read clipboard content
-        clipboard_text <- paste(clipboard_content, collapse = "\n") # Ensure proper formatting
-        shinyAce::updateAceEditor(session, "code_editor", value = clipboard_text) # Update editor
+        clipboard_content <- clipr::read_clip() # Read clipboard
+        clipboard_text <- paste(clipboard_content, collapse = "\n")
+        shinyAce::updateAceEditor(session, "code_editor", value = clipboard_text)
         shiny::showNotification(
           "Clipboard content pasted into editor",
           duration = 2.5,
@@ -296,11 +215,10 @@ document_gadget <- function() {
     })
 
     shiny::observeEvent(input$prepopulate_ms, {
-      prompt <- build_tidyprompt(input$code_editor)
+      prompt <- build_prompt(input$code_editor)
       prompt_text <- prompt$construct_prompt_text()
       encoded_prompt_text <- utils::URLencode(prompt_text, reserved = TRUE)
 
-      # Construct the URL with the encoded prompt
       base_url <- "https://copilot.microsoft.com/"
       full_url <- paste0(base_url, "?q=", encoded_prompt_text)
 
@@ -309,14 +227,11 @@ document_gadget <- function() {
         duration = 2.5,
         type = "message"
       )
-
-      # Open the URL in the default web browser
       utils::browseURL(full_url)
     })
 
     shiny::observeEvent(input$send_prompt_llm, {
-      prompt   <- build_tidyprompt(input$code_editor)
-
+      prompt <- build_prompt(input$code_editor)
       shiny::showNotification(
         "Sending prompt to LLM API; please wait...",
         duration = 2.5,
@@ -336,14 +251,7 @@ document_gadget <- function() {
 
       if (is.null(new_code)) return(invisible(NULL))
 
-      # "Shift" the new code so it's consistent in the editor
-      # We do the reverse: strip off the same `common_prefix` we had,
-      # so the lines remain aligned in the editor
-      # but preserve the deeper indentation among lines.
-      # For simplicity, if you want to keep them flush, you can just replace
-      # with new_code directly. Or do the same “common prefix” approach.
-      #
-      # For example, if you want to keep things flush:
+      # If you want to keep lines flush, you can reindent with "".
       reindented <- reindent_code(new_code, "")
       shinyAce::updateAceEditor(session, "code_editor", value = reindented)
 
@@ -359,19 +267,20 @@ document_gadget <- function() {
     })
   }
 
-  tryCatch(
-    {
-      suppressMessages(
-        shiny::runGadget(
-          ui,
-          server,
-          viewer = shiny::dialogViewer("documentWithPrompt", width = 1200, height = 1000),
-          stopOnCancel = TRUE
-        )
+
+
+  #### Run gadget ##############################################################
+
+  tryCatch({
+    suppressMessages(
+      shiny::runGadget(
+        gadget_ui,
+        gadget_server,
+        viewer = shiny::dialogViewer("documentWithPrompt", width = 1200, height = 1000),
+        stopOnCancel = TRUE
       )
-    },
-    error = function(e) {
-      message("The gadget was closed without saving or canceling.")
-    }
-  )
+    )
+  }, error = function(e) {
+    message("The gadget was closed without saving or canceling.")
+  })
 }

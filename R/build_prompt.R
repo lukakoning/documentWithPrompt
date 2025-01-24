@@ -1,4 +1,4 @@
-build_tidyprompt <- function(code, redact = FALSE) {
+build_prompt <- function(code, redact = FALSE) {
   if (redact) code <- redact_strings(code)
 
   prompt <- tidyprompt::tidyprompt(code) |>

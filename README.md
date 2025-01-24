@@ -19,9 +19,8 @@ The process is as follows:
     can set a keyboard shortcut for this via Tools \> Add-ins \> Browse
     Add-ins \> Keyboard Shortcuts (see
     <https://rstudio.github.io/rstudio-extensions/rstudio_addins.html#keyboard-shorcuts>).
-    Alternatively, you can use function
-    `documentWithPrompt::document_gadget()` (execute this in your
-    console).
+    Alternatively, you can use function `documentWithPrompt::gadget()`
+    in your console.
 
 3)  The add-in will show a code editor with the selected code. Here you
     have the option to copy a prompt to your clipboard, which you can
@@ -46,20 +45,21 @@ values).
 
 This is a quick demo add-in, may contain bugs, and has limited
 configurability. However, if you want to choose your LLM provider you
-can use this option (default is `tidyprompt::llm_provider_openai()`):
+can use `set_llm_provider()`:
 
 ``` r
 # Set to Ollama (local LLM provider)
-options(documentWithPrompt.llm_provider = tidyprompt::llm_provider_ollama())
-# LLM provider must always be of R6 class `tidyprompt::llm_provider-class`; see 'tidyprompt' documentation
+set_llm_provider(tidy_prompt::llm_provider_ollama())
 # Add setting this option to your .Rprofile to make it permanent for every new R session
+# See 'tidyprompt' package for more information on LLM providers
 ```
 
 ## Installation
 
-You can install the development version of documentWithPrompt from
+You can install the development version of ‘documentWithPrompt’ from
 [GitHub](https://github.com/lukakoning/documentWithPrompt) with:
 
 ``` r
+# install.packages("remotes")
 remotes::install_github("lukakoning/documentWithPrompt")
 ```
