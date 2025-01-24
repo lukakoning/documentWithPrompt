@@ -6,7 +6,7 @@ document_gadget <- function() {
   selection <- retrieve_code_selection()
   if (is.null(selection)) return(invisible(NULL))
 
-  #### UI #####################################################################
+  #### UI ######################################################################
 
   gadget_ui <- bslib::page_fluid(
     theme = bslib::bs_theme(version = 5),
