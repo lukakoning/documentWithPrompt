@@ -48,13 +48,14 @@ the code, send it to an LLM, then when the code is documented you can unredact i
 (placing back the original string values).
 
 This is a quick demo add-in, may contain bugs, and has limited configurability. However,
-if you want to choose your LLM provider you can use `set_llm_provider()`:
+if you want to choose your LLM provider you can use `documentWithPrompt::set_llm_provider()`:
 
 ```r
 # Set to Ollama (local LLM provider)
-set_llm_provider(tidy_prompt::llm_provider_ollama())
+documentWithPrompt::set_llm_provider(tidy_prompt::llm_provider_ollama())
 # Add setting this option to your .Rprofile to make it permanent for every new R session
-# See 'tidyprompt' package for more information on LLM providers
+# See 'tidyprompt' package for more information on LLM providers: 
+# https://tjarkvandemerwe.github.io/tidyprompt/articles/getting_started.html#setup-an-llm-provider
 ```
 
 ## Installation
