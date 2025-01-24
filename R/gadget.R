@@ -18,18 +18,20 @@ document_gadget <- function() {
           shiny::tags$div(
             style = "display: flex; gap: 10px;",
             shiny::actionButton("redact", "Redact", class = "btn btn-primary btn-sm") |>
-              bslib::tooltip("Replace all strings with redacted values.", placement = "bottom"),
+              bslib::tooltip("Replace all string values with redacted values.", placement = "bottom"),
             shiny::actionButton("unredact", "Unredact", class = "btn btn-success btn-sm") |>
-              bslib::tooltip("Restore all redacted strings to their original values.", placement = "bottom")
+              bslib::tooltip("Change redacted values to original values.", placement = "bottom")
           ),
 
-          # Right-aligned group: reset, clear, and cancel
+          # Right-aligned group: reset, clear, cancel, and paste
           shiny::tags$div(
             style = "display: flex; gap: 10px;",
-            shiny::actionButton("reset", "Reset", class = "btn btn-secondary btn-sm") |>
-              bslib::tooltip("Reset the editor to the original code."),
+            shiny::actionButton("paste", "Paste", class = "btn btn-info btn-sm") |>
+              bslib::tooltip("Set clipboard content as content of the editor."),
             shiny::actionButton("clear", "Clear", class = "btn btn-warning btn-sm") |>
               bslib::tooltip("Clear all code from the editor."),
+            shiny::actionButton("reset", "Reset", class = "btn btn-secondary btn-sm") |>
+              bslib::tooltip("Reset the editor to the original code."),
             shiny::actionButton("cancel", "Cancel", class = "btn btn-danger btn-sm") |>
               bslib::tooltip("Exit without saving changes to the script.")
           )
@@ -175,18 +177,53 @@ document_gadget <- function() {
     # --- Observe button clicks ---
     shiny::observeEvent(input$redact, {
       new_code <- redact_strings(input$code_editor)
+
+      if (identical(new_code, input$code_editor)) {
+        shiny::showNotification(
+          "No string values found to redact",
+          duration = 2.5,
+          type = "message"
+        )
+        return(invisible(NULL))
+      }
+
       shinyAce::updateAceEditor(session, "code_editor", value = new_code)
+      shiny::showNotification(
+        "String values were redacted",
+        duration = 2.5,
+        type = "message"
+      )
     })
 
     shiny::observeEvent(input$unredact, {
       new_code <- unredact_strings(input$code_editor)
+
+      if (identical(new_code, input$code_editor)) {
+        shiny::showNotification(
+          "No redacted string values found",
+          duration = 2.5,
+          type = "message"
+        )
+        return(invisible(NULL))
+      }
+
       shinyAce::updateAceEditor(session, "code_editor", value = new_code)
+      shiny::showNotification(
+        "String values were unredacted",
+        duration = 2.5,
+        type = "message"
+      )
     })
 
     shiny::observeEvent(input$reset, {
       # Optionally clear the map when resetting
       redacted_strings(character(0))
       shinyAce::updateAceEditor(session, "code_editor", value = selection$code)
+      shiny::showNotification(
+        "Editor reset to original code",
+        duration = 2.5,
+        type = "message"
+      )
     })
 
     shiny::observeEvent(input$clear, {
@@ -220,7 +257,7 @@ document_gadget <- function() {
       prompt <- build_tidyprompt(input$code_editor)
       clipr::write_clip(prompt$construct_prompt_text())
       shiny::showNotification(
-        "Prompt copied to clipboard!",
+        "Prompt copied",
         duration = 2.5,
         type = "message"
       )
@@ -231,12 +268,31 @@ document_gadget <- function() {
       prompt_text <- prompt$construct_prompt_text()
       clipr::write_clip(prompt_text)
       shiny::showNotification(
-        "Prompt copied to clipboard & opening MS Copilot in browser!",
+        "Prompt copied; opening MS Copilot in browser",
         duration = 2.5,
         type = "message"
       )
       base_url <- "https://copilot.microsoft.com/"
       utils::browseURL(base_url)
+    })
+
+    shiny::observeEvent(input$paste, {
+      tryCatch({
+        clipboard_content <- clipr::read_clip() # Read clipboard content
+        clipboard_text <- paste(clipboard_content, collapse = "\n") # Ensure proper formatting
+        shinyAce::updateAceEditor(session, "code_editor", value = clipboard_text) # Update editor
+        shiny::showNotification(
+          "Clipboard content pasted into editor",
+          duration = 2.5,
+          type = "message"
+        )
+      }, error = function(e) {
+        shiny::showNotification(
+          "Failed to read clipboard content",
+          duration = 2.5,
+          type = "error"
+        )
+      })
     })
 
     shiny::observeEvent(input$prepopulate_ms, {
@@ -249,7 +305,7 @@ document_gadget <- function() {
       full_url <- paste0(base_url, "?q=", encoded_prompt_text)
 
       shiny::showNotification(
-        "Opening prepopulated MS Copilot in browser!",
+        "Opening MS Copilot in browser (with prompt)",
         duration = 2.5,
         type = "message"
       )
@@ -262,7 +318,7 @@ document_gadget <- function() {
       prompt   <- build_tidyprompt(input$code_editor)
 
       shiny::showNotification(
-        "Sending to LLM API! Please wait...",
+        "Sending prompt to LLM API; please wait...",
         duration = 2.5,
         type = "message"
       )
@@ -271,7 +327,7 @@ document_gadget <- function() {
         send_prompt_to_api(prompt)
       }, error = function(e) {
         shiny::showNotification(
-          "Error sending prompt to API.",
+          "Error sending prompt to LLM API; see console",
           duration = 2.5,
           type = "error"
         )
@@ -292,7 +348,7 @@ document_gadget <- function() {
       shinyAce::updateAceEditor(session, "code_editor", value = reindented)
 
       shiny::showNotification(
-        "Editor updated with response from LLM API!",
+        "Editor updated with response from LLM API",
         duration = 2.5,
         type = "message"
       )
@@ -309,7 +365,7 @@ document_gadget <- function() {
         shiny::runGadget(
           ui,
           server,
-          viewer = shiny::dialogViewer("documentWithPrompt", width = 1200, height = 1600),
+          viewer = shiny::dialogViewer("documentWithPrompt", width = 1200, height = 1000),
           stopOnCancel = TRUE
         )
       )
