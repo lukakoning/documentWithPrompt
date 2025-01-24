@@ -4,6 +4,8 @@
 # documentWithPrompt
 
 <!-- badges: start -->
+
+[![R-CMD-check](https://github.com/lukakoning/documentWithPrompt/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/lukakoning/documentWithPrompt/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 ‘documentWithPrompt’ provides an RStudio add-in which assists you in
