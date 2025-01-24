@@ -49,7 +49,8 @@ gadget <- function() {
           height = "600px",
           fontSize = 14,
           wordWrap = TRUE
-        )
+        ),
+        editPromptModuleUI("prompt_module")
       ),
       shiny::tags$div(
         style = "margin-top: 10px; display: flex; gap: 10px;",
@@ -94,6 +95,21 @@ gadget <- function() {
   #### Server ##################################################################
 
   gadget_server <- function(input, output, session) {
+
+    # CALL THE PROMPT MODULE
+    # Pass in desired initial prompt and predefined prompts
+    prompt_rv <- editPromptModuleServer(
+      id = "prompt_module",
+      predefined_prompts = c(
+        "Document" = paste0(
+          "Please add documentation to this code snippet.\nYour documentation should explain what the code does,",
+          " how it works, and why it is important.", "\n",
+          "Your documentation should be clear, concise, and easy to understand.", "\n",
+          "You may not alter the code itself or change how it functions."
+        )
+      ),
+      prompts_file = file.path("~", ".documentWithPrompt_prompts.rds")
+    )
 
     # A reactiveVal storing the "string -> placeholder" map
     redacted_strings_map <- shiny::reactiveVal(character(0))
@@ -173,7 +189,9 @@ gadget <- function() {
     })
 
     shiny::observeEvent(input$copy_prompt, {
-      prompt <- build_prompt(input$code_editor)
+      # The user-chosen text from the module:
+      user_prompt_text <- prompt_rv()
+      prompt <- build_prompt(input$code_editor, user_prompt_text)
       clipr::write_clip(prompt$construct_prompt_text())
       shiny::showNotification(
         "Prompt copied",
@@ -183,7 +201,9 @@ gadget <- function() {
     })
 
     shiny::observeEvent(input$copy_prompt_open_ms, {
-      prompt <- build_prompt(input$code_editor)
+      # The user-chosen text from the module:
+      user_prompt_text <- prompt_rv()
+      prompt <- build_prompt(input$code_editor, user_prompt_text)
       prompt_text <- prompt$construct_prompt_text()
       clipr::write_clip(prompt_text)
       shiny::showNotification(
@@ -215,7 +235,8 @@ gadget <- function() {
     })
 
     shiny::observeEvent(input$prepopulate_ms, {
-      prompt <- build_prompt(input$code_editor)
+      user_prompt_text <- prompt_rv()
+      prompt <- build_prompt(input$code_editor, user_prompt_text)
       prompt_text <- prompt$construct_prompt_text()
       encoded_prompt_text <- utils::URLencode(prompt_text, reserved = TRUE)
 
@@ -231,7 +252,8 @@ gadget <- function() {
     })
 
     shiny::observeEvent(input$send_prompt_llm, {
-      prompt <- build_prompt(input$code_editor)
+      user_prompt_text <- prompt_rv()
+      prompt <- build_prompt(input$code_editor, user_prompt_text)
       shiny::showNotification(
         "Sending prompt to LLM API; please wait...",
         duration = 2.5,
