@@ -21,6 +21,20 @@ knitr::opts_chunk$set(
 'documentWithPrompt' provides an RStudio add-in which assists you in 
 documenting your code using large language models.
 
+Note: this is a quick demo version; may contain bugs and has
+limited configurability.
+
+## Installation
+
+You can install the development version of 'documentWithPrompt' from [GitHub](https://github.com/lukakoning/documentWithPrompt) with:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("lukakoning/documentWithPrompt")
+```
+
+## Usage
+
 The process is as follows:
 
 1) In your R script within RStudio, select the code you want to document.
@@ -47,8 +61,10 @@ if you are concerned about them containing sensitive information. You can redact
 the code, send it to an LLM, then when the code is documented you can unredact it
 (placing back the original string values).
 
-This is a quick demo add-in, may contain bugs, and has limited configurability. However,
-if you want to choose your LLM provider you can use `documentWithPrompt::set_llm_provider()`:
+
+## Configure LLM provider
+
+If you want to choose your LLM provider, you can use `documentWithPrompt::set_llm_provider()`:
 
 ```r
 # Set to Ollama (local LLM provider)
@@ -58,11 +74,6 @@ documentWithPrompt::set_llm_provider(tidy_prompt::llm_provider_ollama())
 # https://tjarkvandemerwe.github.io/tidyprompt/articles/getting_started.html#setup-an-llm-provider
 ```
 
-## Installation
+## Screenshot
 
-You can install the development version of 'documentWithPrompt' from [GitHub](https://github.com/lukakoning/documentWithPrompt) with:
-
-``` r
-# install.packages("remotes")
-remotes::install_github("lukakoning/documentWithPrompt")
-```
+![Screenshot](img/screenshot.jpg)
