@@ -67,7 +67,7 @@ If you want to choose your LLM provider, you can use
 
 ``` r
 # Set to Ollama (local LLM provider)
-documentWithPrompt::set_llm_provider(tidy_prompt::llm_provider_ollama())
+documentWithPrompt::set_llm_provider(tidyprompt::llm_provider_ollama())
 # Add setting this option to your .Rprofile to make it permanent for every new R session
 # See 'tidyprompt' package for more information on LLM providers: 
 # https://tjarkvandemerwe.github.io/tidyprompt/articles/getting_started.html#setup-an-llm-provider
