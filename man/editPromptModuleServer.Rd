@@ -13,17 +13,13 @@ editPromptModuleServer(
 \arguments{
 \item{id}{Shiny module ID}
 
-\item{predefined_prompts}{Named vector or list of predefined prompts}
+\item{predefined_prompts}{Named vector/list of predefined prompts (name=title, value=text)}
 
 \item{prompts_file}{Path to RDS file for user-defined prompts}
 }
 \value{
-A reactive expression containing the current prompt text.
+A reactive expression containing the current prompt text
 }
 \description{
-This module handles:
-  - Loading/saving user-defined prompts from an RDS file
-  - Combining them with predefined prompts
-  - Providing a modal to pick or create a prompt
-  - Returning a reactive that holds the currently chosen prompt
+Edit Prompt Module Server
 }

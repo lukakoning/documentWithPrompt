@@ -12,7 +12,7 @@ editPromptModuleUI(id, label = "Configure prompt")
 \item{label}{The label for the button that opens the modal}
 }
 \value{
-An actionButton (when clicked, it will show the prompt editor modal).
+A tagList containing shiny UI elements
 }
 \description{
 Edit Prompt Module UI

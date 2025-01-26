@@ -18,6 +18,7 @@ Imports:
     rstudioapi,
     shiny,
     shinyAce,
+    shinyjs,
     stringr,
     tidyprompt,
     utils
