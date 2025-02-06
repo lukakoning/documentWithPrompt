@@ -34,8 +34,8 @@ redact_strings <- function(code, redacted_strings) {
   next_id <- length(old_map) + 1
 
   # Separate placeholders vs. genuine strings
-  placeholders     <- all_found[vapply(all_found, is_placeholder, logical(1))]
-  genuine_strings  <- setdiff(all_found, placeholders)
+  placeholders <- all_found[vapply(all_found, is_placeholder, logical(1))]
+  genuine_strings <- setdiff(all_found, placeholders)
 
   # For each genuine string found:
   #   - If it’s already in old_map, keep the same placeholder
@@ -71,7 +71,12 @@ unredact_strings <- function(code, redacted_strings) {
   unredacted_code <- code
   for (original_str in names(current_map)) {
     placeholder_str <- current_map[[original_str]]
-    unredacted_code <- gsub(placeholder_str, original_str, unredacted_code, fixed = TRUE)
+    unredacted_code <- gsub(
+      placeholder_str,
+      original_str,
+      unredacted_code,
+      fixed = TRUE
+    )
   }
   unredacted_code
 }

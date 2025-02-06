@@ -50,7 +50,7 @@ retrieve_code_selection <- function() {
 
   # For each line, get the total leading whitespace
   get_leading_ws <- function(line) sub("^(\\s*).*", "\\1", line)
-  leading_spaces  <- vapply(original_lines, get_leading_ws, character(1))
+  leading_spaces <- vapply(original_lines, get_leading_ws, character(1))
 
   # Find the common prefix among all lines (e.g. "    " if every line starts w/ 4 spaces)
   common_prefix <- find_common_prefix(leading_spaces)
@@ -71,7 +71,7 @@ retrieve_code_selection <- function() {
 
   shifted_lines <- mapply(
     shift_one_line,
-    full_line    = original_lines,
+    full_line = original_lines,
     full_leading = leading_spaces,
     USE.NAMES = FALSE
   )
@@ -81,9 +81,9 @@ retrieve_code_selection <- function() {
 
   # Return all needed info for re‐applying
   list(
-    context       = context,
-    range         = context$selection[[1]]$range,
-    code          = shifted_code,
+    context = context,
+    range = context$selection[[1]]$range,
+    code = shifted_code,
     original_lines = original_lines, # might be useful
     common_prefix = common_prefix
   )

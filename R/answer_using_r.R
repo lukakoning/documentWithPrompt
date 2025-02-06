@@ -81,32 +81,34 @@
 #' @return A [tidyprompt()] object with the [prompt_wrap()] added to it, which
 #' will handle R code generation and possibly evaluation
 answer_using_r_updated <- function(
-    prompt,
-    add_text = "You must code in the programming language 'R' to answer this prompt.",
-    pkgs_to_use = c(),
-    objects_to_use = list(),
-    list_packages = TRUE,
-    list_objects = TRUE,
-    skim_dataframes = TRUE,
-    evaluate_code = FALSE,
-    r_session_options = list(),
-    output_as_tool = FALSE,
-    return_mode = c(
-      "full",
-      "code",
-      "console",
-      "object",
-      "formatted_output",
-      "llm_answer"
-    )
+  prompt,
+  add_text = "You must code in the programming language 'R' to answer this prompt.",
+  pkgs_to_use = c(),
+  objects_to_use = list(),
+  list_packages = TRUE,
+  list_objects = TRUE,
+  skim_dataframes = TRUE,
+  evaluate_code = FALSE,
+  r_session_options = list(),
+  output_as_tool = FALSE,
+  return_mode = c(
+    "full",
+    "code",
+    "console",
+    "object",
+    "formatted_output",
+    "llm_answer"
+  )
 ) {
   ## Validate settings
 
   return_mode <- match.arg(return_mode)
 
   stopifnot(
-    is.character(add_text), length(add_text) == 1,
-    length(pkgs_to_use) == 0 || is.vector(pkgs_to_use) & all(sapply(pkgs_to_use, is.character)),
+    is.character(add_text),
+    length(add_text) == 1,
+    length(pkgs_to_use) == 0 ||
+      is.vector(pkgs_to_use) & all(sapply(pkgs_to_use, is.character)),
     is.list(objects_to_use),
     length(objects_to_use) == 0 || !is.null(names(objects_to_use)),
     is.logical(list_packages),
@@ -119,13 +121,14 @@ answer_using_r_updated <- function(
 
   if (evaluate_code & !requireNamespace("callr", quietly = TRUE))
     stop("The 'callr' package is required to evaluate R code.")
-  if (!evaluate_code & output_as_tool)
-    output_as_tool <- FALSE
-  if (output_as_tool)
-    return_mode <- "llm_answer"
-  if (!evaluate_code & return_mode %in% c("console", "object", "formatted_output"))
-    stop("The return mode must be 'full', 'code', or 'llm_answer' if 'evaluate_code' is FALSE")
-
+  if (!evaluate_code & output_as_tool) output_as_tool <- FALSE
+  if (output_as_tool) return_mode <- "llm_answer"
+  if (
+    !evaluate_code & return_mode %in% c("console", "object", "formatted_output")
+  )
+    stop(
+      "The return mode must be 'full', 'code', or 'llm_answer' if 'evaluate_code' is FALSE"
+    )
 
   ## Validate evaluation_session & load packages
 
@@ -138,58 +141,75 @@ answer_using_r_updated <- function(
     evaluation_session <- callr::r_session$new(options = r_session_options)
 
     # Check if packages are installed using requireNamespace
-    installed_pkgs <- evaluation_session$run(function(pkgs_to_use) {
-      # Check if each package is installed using requireNamespace and return as a named list
-      sapply(pkgs_to_use, function(pkg) {
-        requireNamespace(pkg, quietly = TRUE)
-      }, simplify = TRUE, USE.NAMES = TRUE)
-    }, args = list(pkgs_to_use = pkgs_to_use))
-
+    installed_pkgs <- evaluation_session$run(
+      function(pkgs_to_use) {
+        # Check if each package is installed using requireNamespace and return as a named list
+        sapply(
+          pkgs_to_use,
+          function(pkg) {
+            requireNamespace(pkg, quietly = TRUE)
+          },
+          simplify = TRUE,
+          USE.NAMES = TRUE
+        )
+      },
+      args = list(pkgs_to_use = pkgs_to_use)
+    )
 
     if (any(installed_pkgs == FALSE)) {
-      stop(paste0(
-        "The following packages are not installed: ",
-        names(installed_pkgs)[installed_pkgs == FALSE]
-      ))
+      stop(
+        paste0(
+          "The following packages are not installed: ",
+          names(installed_pkgs)[installed_pkgs == FALSE]
+        )
+      )
     }
 
     # Load the packages
-    loaded_pkgs <- evaluation_session$run(function(pkgs_to_use) {
-      for (pkg_name in pkgs_to_use) {
-        library(pkg_name, character.only = TRUE)
-      }
-      session_info <- utils::sessionInfo()
-      loaded_pkgs <- names(session_info$otherPkgs)
-      loaded_pkgs
-    }, args = list(pkgs_to_use = pkgs_to_use))
+    loaded_pkgs <- evaluation_session$run(
+      function(pkgs_to_use) {
+        for (pkg_name in pkgs_to_use) {
+          library(pkg_name, character.only = TRUE)
+        }
+        session_info <- utils::sessionInfo()
+        loaded_pkgs <- names(session_info$otherPkgs)
+        loaded_pkgs
+      },
+      args = list(pkgs_to_use = pkgs_to_use)
+    )
 
     # Load the objects
-    loaded_objects <- evaluation_session$run(function(objects_to_use) {
-      for (i in seq_along(objects_to_use)) {
-        obj <- objects_to_use[[i]]
-        obj_name <- names(objects_to_use)[i]
+    loaded_objects <- evaluation_session$run(
+      function(objects_to_use) {
+        for (i in seq_along(objects_to_use)) {
+          obj <- objects_to_use[[i]]
+          obj_name <- names(objects_to_use)[i]
 
-        # Assign to the global environment of the r_session
-        assign(obj_name, obj, envir = parent.env(environment()))
-      }
+          # Assign to the global environment of the r_session
+          assign(obj_name, obj, envir = parent.env(environment()))
+        }
 
-      # List objects in the global environment
-      ls(envir = .GlobalEnv)
-    }, args = list(objects_to_use = objects_to_use))
+        # List objects in the global environment
+        ls(envir = .GlobalEnv)
+      },
+      args = list(objects_to_use = objects_to_use)
+    )
     loaded_objects
 
     if (!all(loaded_objects %in% names(objects_to_use))) {
-      stop(paste0(
-        "The following objects could not be loaded: ",
-        names(objects_to_use)[!(names(objects_to_use) %in% names(loaded_objects))]
-      ))
+      stop(
+        paste0(
+          "The following objects could not be loaded: ",
+          names(objects_to_use)[
+            !(names(objects_to_use) %in% names(loaded_objects))
+          ]
+        )
+      )
     }
-
   } else {
     loaded_pkgs <- pkgs_to_use
     loaded_objects <- names(objects_to_use)
   }
-
 
   ## Define modify_fn which will add information about the setting
   ##   in which R code can be generated
@@ -215,7 +235,10 @@ answer_using_r_updated <- function(
 
     if (list_objects) {
       object_types <- sapply(objects_to_use, function(obj) class(obj))
-      objects_df <- data.frame(Object_name = names(objects_to_use), Type = object_types)
+      objects_df <- data.frame(
+        Object_name = names(objects_to_use),
+        Type = object_types
+      )
 
       if (nrow(objects_df) > 0) {
         new_text <- glue::glue(
@@ -229,10 +252,12 @@ answer_using_r_updated <- function(
           dataframes <- objects_df$Object_name[objects_df$Type == "data.frame"]
           if (length(dataframes) > 0) {
             if (!requireNamespace("skimr", quietly = TRUE)) {
-              warning(paste0(
-                "The 'skimr' package is required to skim dataframes.",
-                " Skim summary of dataframes currently not shown in prompt"
-              ))
+              warning(
+                paste0(
+                  "The 'skimr' package is required to skim dataframes.",
+                  " Skim summary of dataframes currently not shown in prompt"
+                )
+              )
             } else {
               for (df_name in dataframes) {
                 df <- objects_to_use[[df_name]]
@@ -284,7 +309,6 @@ answer_using_r_updated <- function(
     return(new_text)
   }
 
-
   ## Define extraction_fn which will extract R code from the response
   ##   and handle it according to the settings of this function
 
@@ -300,20 +324,28 @@ answer_using_r_updated <- function(
         return(x)
       }
 
-      return(tidyprompt::llm_feedback(paste0(
-        "No R code detected. You must provide R code",
-        " between ```r and ```."
-      )))
+      return(
+        tidyprompt::llm_feedback(
+          paste0(
+            "No R code detected. You must provide R code",
+            " between ```r and ```."
+          )
+        )
+      )
     }
 
     # Check if the R code is valid
     parsed_code <- tryCatch(parse(text = extracted_code), error = function(e) e)
     if (inherits(parsed_code, "error")) {
-      return(tidyprompt::llm_feedback(glue::glue(
-        "Invalid R code detected:\n",
-        "    {parsed_code$message}\n",
-        "Please provide syntactically correct R code."
-      )))
+      return(
+        tidyprompt::llm_feedback(
+          glue::glue(
+            "Invalid R code detected:\n",
+            "    {parsed_code$message}\n",
+            "Please provide syntactically correct R code."
+          )
+        )
+      )
     }
     return_list$code <- parsed_code
 
@@ -324,36 +356,55 @@ answer_using_r_updated <- function(
     }
 
     clone_session <- evaluation_session$clone() # Reset the session every time
-    output <- clone_session$run_with_output(function(r_code) {
-      eval(parse(text = r_code))
-    }, args = list(parsed_code))
+    output <- clone_session$run_with_output(
+      function(r_code) {
+        eval(parse(text = r_code))
+      },
+      args = list(parsed_code)
+    )
 
     # Check if errors occurred during execution
     if (!is.null(output$error)) {
-      return(tidyprompt::llm_feedback(glue::glue(
-        "An error occurred while executing the R code:\n",
-        "    {output$error}"
-      )))
+      return(
+        tidyprompt::llm_feedback(
+          glue::glue(
+            "An error occurred while executing the R code:\n",
+            "    {output$error}"
+          )
+        )
+      )
     }
 
     # Check if the code produced any relevant output
     if (output$stdout == "" & return_mode == "console") {
-      return(tidyprompt::llm_feedback(glue::glue(
-        "The R code did not produce any console output.",
-        " Please provide R code that produces console output."
-      )))
+      return(
+        tidyprompt::llm_feedback(
+          glue::glue(
+            "The R code did not produce any console output.",
+            " Please provide R code that produces console output."
+          )
+        )
+      )
     }
     if (is.null(output$result) & return_mode == "object") {
-      return(tidyprompt::llm_feedback(glue::glue(
-        "The R code did not produce an object.",
-        " Please provide R code that produces an object."
-      )))
+      return(
+        tidyprompt::llm_feedback(
+          glue::glue(
+            "The R code did not produce an object.",
+            " Please provide R code that produces an object."
+          )
+        )
+      )
     }
     if (is.null(output$stdout) & is.null(output$result)) {
-      return(tidyprompt::llm_feedback(glue::glue(
-        "The R code did not produce any output.",
-        " Please provide R code that produces output."
-      )))
+      return(
+        tidyprompt::llm_feedback(
+          glue::glue(
+            "The R code did not produce any output.",
+            " Please provide R code that produces output."
+          )
+        )
+      )
     }
 
     return_list$output <- output
@@ -385,25 +436,23 @@ answer_using_r_updated <- function(
     )
 
     if (output_as_tool) {
-      return(tidyprompt::llm_feedback(return_list$formatted_output, tool_result = TRUE))
+      return(
+        tidyprompt::llm_feedback(
+          return_list$formatted_output,
+          tool_result = TRUE
+        )
+      )
     }
 
-    if (return_mode == "full")
-      return(return_list)
-    if (return_mode == "code")
-      return(return_list$code)
-    if (return_mode == "console")
-      return(return_list$output$stdout)
-    if (return_mode == "object")
-      return(return_list$output$result)
-    if (return_mode == "formatted_output")
-      return(return_list$formatted_output)
-    if (return_mode == "llm_answer")
-      return(x)
+    if (return_mode == "full") return(return_list)
+    if (return_mode == "code") return(return_list$code)
+    if (return_mode == "console") return(return_list$output$stdout)
+    if (return_mode == "object") return(return_list$output$result)
+    if (return_mode == "formatted_output") return(return_list$formatted_output)
+    if (return_mode == "llm_answer") return(x)
 
     return(output$stdout)
   }
-
 
   ## If we are sending back output, we can consider this wrapper a tool
 
@@ -412,16 +461,16 @@ answer_using_r_updated <- function(
     type <- "tool"
   }
 
-
   ## Finally, wrap the prompt with the new prompt wrap
 
   tidyprompt::prompt_wrap(
-    prompt, modify_fn, extraction_fn,
-    type = type, name = "answer_using_r"
+    prompt,
+    modify_fn,
+    extraction_fn,
+    type = type,
+    name = "answer_using_r"
   )
 }
-
-
 
 #' Helper function to extract R code from a string, preserving comments
 #'
@@ -450,4 +499,3 @@ answer_using_r_extract_r_code <- function(input_string) {
   unlist(code_blocks) |>
     stringr::str_replace(stringr::fixed("```r"), "")
 }
-

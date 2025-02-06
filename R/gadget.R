@@ -1,4 +1,4 @@
-#' Launch a gadget to document code with LLMs
+#' Launch a gadget to document code with LLMs!
 #'
 #' @return NULL; this function is called for its side effects (launching the gadget)
 #' @export
@@ -19,22 +19,57 @@ gadget <- function() {
           # Left-aligned group: unredact and redact
           shiny::tags$div(
             style = "display: flex; gap: 10px;",
-            shiny::actionButton("redact", "Redact", class = "btn btn-primary btn-sm") |>
-              bslib::tooltip("Replace all string values with redacted values.", placement = "bottom"),
-            shiny::actionButton("unredact", "Unredact", class = "btn btn-success btn-sm") |>
-              bslib::tooltip("Change redacted values to original values.", placement = "bottom")
+            shiny::actionButton(
+              "redact",
+              "Redact",
+              class = "btn btn-primary btn-sm"
+            ) |>
+              bslib::tooltip(
+                "Replace all string values with redacted values.",
+                placement = "bottom"
+              ) |>
+              print(
+                shiny::tags$style(
+                  ".btn-primary { background-color: #ff0000; border-color: #ff0000; }"
+                )
+              ),
+            shiny::actionButton(
+              "unredact",
+              "Unredact",
+              class = "btn btn-success btn-sm"
+            ) |>
+              bslib::tooltip(
+                "Change redacted values to original values.",
+                placement = "bottom"
+              )
           ),
 
           # Right-aligned group: reset, clear, cancel, and paste
           shiny::tags$div(
             style = "display: flex; gap: 10px;",
-            shiny::actionButton("paste", "Paste", class = "btn btn-info btn-sm") |>
+            shiny::actionButton(
+              "paste",
+              "Paste",
+              class = "btn btn-info btn-sm"
+            ) |>
               bslib::tooltip("Set clipboard content as content of the editor."),
-            shiny::actionButton("clear", "Clear", class = "btn btn-warning btn-sm") |>
+            shiny::actionButton(
+              "clear",
+              "Clear",
+              class = "btn btn-warning btn-sm"
+            ) |>
               bslib::tooltip("Clear all code from the editor."),
-            shiny::actionButton("reset", "Reset", class = "btn btn-secondary btn-sm") |>
+            shiny::actionButton(
+              "reset",
+              "Reset",
+              class = "btn btn-secondary btn-sm"
+            ) |>
               bslib::tooltip("Reset the editor to the original code."),
-            shiny::actionButton("cancel", "Cancel", class = "btn btn-danger btn-sm") |>
+            shiny::actionButton(
+              "cancel",
+              "Cancel",
+              class = "btn btn-danger btn-sm"
+            ) |>
               bslib::tooltip("Exit without saving changes to the script.")
           )
         )
@@ -55,8 +90,14 @@ gadget <- function() {
       shiny::tags$div(
         style = "margin-top: 10px; display: flex; gap: 10px;",
         shiny::actionButton("copy_prompt", "Copy prompt") |>
-          bslib::tooltip("Copy the prompt to the clipboard.", placement = "bottom"),
-        shiny::actionButton("copy_prompt_open_ms", "Copy prompt & open MS Copilot") |>
+          bslib::tooltip(
+            "Copy the prompt to the clipboard.",
+            placement = "bottom"
+          ),
+        shiny::actionButton(
+          "copy_prompt_open_ms",
+          "Copy prompt & open MS Copilot"
+        ) |>
           bslib::tooltip(
             paste0(
               "Copy the prompt to the clipboard, and open MS Copilot",
@@ -72,7 +113,10 @@ gadget <- function() {
             ),
             placement = "bottom"
           ),
-        shiny::actionButton("send_prompt_llm", "Send prompt to API & auto-edit") |>
+        shiny::actionButton(
+          "send_prompt_llm",
+          "Send prompt to API & auto-edit"
+        ) |>
           bslib::tooltip(
             paste0(
               "Send the prompt to the LLM API; automatically enter the response in the code editor."
@@ -83,19 +127,23 @@ gadget <- function() {
       bslib::card_footer(
         shiny::tags$div(
           style = "display: flex; justify-content: flex-end;",
-          shiny::actionButton("save_bottom", "Save", class = "btn btn-primary") |>
-            bslib::tooltip("Save the edited code to the script and exit.", placement = "bottom")
+          shiny::actionButton(
+            "save_bottom",
+            "Save",
+            class = "btn btn-primary"
+          ) |>
+            bslib::tooltip(
+              "Save the edited code to the script and exit.",
+              placement = "bottom"
+            )
         )
       )
     )
   )
 
-
-
   #### Server ##################################################################
 
   gadget_server <- function(input, output, session) {
-
     # CALL THE PROMPT MODULE
     # Pass in desired initial prompt and predefined prompts
     prompt_rv <- editPromptModuleServer(
@@ -103,8 +151,10 @@ gadget <- function() {
       predefined_prompts = c(
         "Document" = paste0(
           "Please add documentation to this code snippet.\nYour documentation should explain what the code does,",
-          " how it works, and why it is important.", "\n",
-          "Your documentation should be clear, concise, and easy to understand.", "\n",
+          " how it works, and why it is important.",
+          "\n",
+          "Your documentation should be clear, concise, and easy to understand.",
+          "\n",
           "You may not alter the code itself or change how it functions."
         )
       ),
@@ -216,22 +266,29 @@ gadget <- function() {
     })
 
     shiny::observeEvent(input$paste, {
-      tryCatch({
-        clipboard_content <- clipr::read_clip() # Read clipboard
-        clipboard_text <- paste(clipboard_content, collapse = "\n")
-        shinyAce::updateAceEditor(session, "code_editor", value = clipboard_text)
-        shiny::showNotification(
-          "Clipboard content pasted into editor",
-          duration = 2.5,
-          type = "message"
-        )
-      }, error = function(e) {
-        shiny::showNotification(
-          "Failed to read clipboard content",
-          duration = 2.5,
-          type = "error"
-        )
-      })
+      tryCatch(
+        {
+          clipboard_content <- clipr::read_clip() # Read clipboard
+          clipboard_text <- paste(clipboard_content, collapse = "\n")
+          shinyAce::updateAceEditor(
+            session,
+            "code_editor",
+            value = clipboard_text
+          )
+          shiny::showNotification(
+            "Clipboard content pasted into editor",
+            duration = 2.5,
+            type = "message"
+          )
+        },
+        error = function(e) {
+          shiny::showNotification(
+            "Failed to read clipboard content",
+            duration = 2.5,
+            type = "error"
+          )
+        }
+      )
     })
 
     shiny::observeEvent(input$prepopulate_ms, {
@@ -260,16 +317,19 @@ gadget <- function() {
         type = "message"
       )
 
-      new_code <- tryCatch({
-        send_prompt_to_api(prompt)
-      }, error = function(e) {
-        shiny::showNotification(
-          "Error sending prompt to LLM API; see console",
-          duration = 2.5,
-          type = "error"
-        )
-        NULL
-      })
+      new_code <- tryCatch(
+        {
+          send_prompt_to_api(prompt)
+        },
+        error = function(e) {
+          shiny::showNotification(
+            "Error sending prompt to LLM API; see console",
+            duration = 2.5,
+            type = "error"
+          )
+          NULL
+        }
+      )
 
       if (is.null(new_code)) return(invisible(NULL))
 
@@ -289,20 +349,25 @@ gadget <- function() {
     })
   }
 
-
-
   #### Run gadget ##############################################################
 
-  tryCatch({
-    suppressMessages(
-      shiny::runGadget(
-        gadget_ui,
-        gadget_server,
-        viewer = shiny::dialogViewer("documentWithPrompt", width = 1200, height = 1000),
-        stopOnCancel = TRUE
+  tryCatch(
+    {
+      suppressMessages(
+        shiny::runGadget(
+          gadget_ui,
+          gadget_server,
+          viewer = shiny::dialogViewer(
+            "documentWithPrompt",
+            width = 1200,
+            height = 1000
+          ),
+          stopOnCancel = TRUE
+        )
       )
-    )
-  }, error = function(e) {
-    message("The gadget was closed without saving or canceling.")
-  })
+    },
+    error = function(e) {
+      message("The gadget was closed without saving or canceling.")
+    }
+  )
 }

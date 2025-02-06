@@ -24,11 +24,11 @@ editPromptModuleUI <- function(id, label = "Configure prompt") {
 #'
 #' @return A reactive expression containing the current prompt text
 editPromptModuleServer <- function(
-    id,
-    predefined_prompts = c(
-      "Document" = "Add documentation to this code."
-    ),
-    prompts_file = file.path("~", ".documentWithPrompt_prompts.rds")
+  id,
+  predefined_prompts = c(
+    "Document" = "Add documentation to this code."
+  ),
+  prompts_file = file.path("~", ".documentWithPrompt_prompts.rds")
 ) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -99,7 +99,7 @@ editPromptModuleServer <- function(
     # Reactive "database"
     #-------------------------
     user_prompts <- shiny::reactiveVal(user_defined_prompts)
-    metadata     <- shiny::reactiveVal(meta_info)
+    metadata <- shiny::reactiveVal(meta_info)
 
     # The currently active prompt text
     current_prompt <- shiny::reactiveVal(default_prompt_text)
@@ -108,7 +108,7 @@ editPromptModuleServer <- function(
     #  - current_name: the actual name used in user_prompts or in the predefined list
     #  - typed_name:   what is displayed in the textInput (may be different if user is editing)
     current_name <- shiny::reactiveVal(default_name)
-    typed_name   <- shiny::reactiveVal(default_name)
+    typed_name <- shiny::reactiveVal(default_name)
 
     # Are we currently editing the name textInput? If TRUE -> button says "Save Name"
     editing_name <- shiny::reactiveVal(FALSE)
@@ -178,7 +178,11 @@ editPromptModuleServer <- function(
                     style = "flex: 1; min-width: 300px;",
                     bslib::card_header("New prompt"),
                     bslib::card_body(
-                      shiny::actionButton(ns("new_prompt_btn"), "Create", class = "btn btn-secondary")
+                      shiny::actionButton(
+                        ns("new_prompt_btn"),
+                        "Create",
+                        class = "btn btn-secondary"
+                      )
                     )
                   )
                 ),
@@ -218,25 +222,52 @@ editPromptModuleServer <- function(
                       ns("prompt_text"),
                       label = "Text:",
                       value = current_prompt(),
-                      rows = 5, width = "100%"
+                      rows = 5,
+                      width = "100%"
                     )
                   ),
                   bslib::card_footer(
                     style = "display:flex; justify-content: space-between;",
-                    shiny::actionButton(ns("use_temp"), "Use", class = "btn btn-primary") |>
+                    shiny::actionButton(
+                      ns("use_temp"),
+                      "Use",
+                      class = "btn btn-primary"
+                    ) |>
                       bslib::tooltip("Use this prompt.", placement = "bottom"),
-                    shiny::actionButton(ns("save_perm"), "Save", class = "btn btn-success") |>
-                      bslib::tooltip("Save this prompt for re-use. (Not required for use in only this session.)", placement = "bottom"),
-                    shiny::actionButton(ns("delete_prompt"), "Delete", class = "btn btn-danger") |>
-                      bslib::tooltip("Delete a saved prompt.", placement = "bottom"),
-                    shiny::actionButton(ns("set_default"), "Set as default", class = "btn btn-info") |>
-                      bslib::tooltip("Set this prompt as the default for future sessions.", placement = "bottom")
+                    shiny::actionButton(
+                      ns("save_perm"),
+                      "Save",
+                      class = "btn btn-success"
+                    ) |>
+                      bslib::tooltip(
+                        "Save this prompt for re-use. (Not required for use in only this session.)",
+                        placement = "bottom"
+                      ),
+                    shiny::actionButton(
+                      ns("delete_prompt"),
+                      "Delete",
+                      class = "btn btn-danger"
+                    ) |>
+                      bslib::tooltip(
+                        "Delete a saved prompt.",
+                        placement = "bottom"
+                      ),
+                    shiny::actionButton(
+                      ns("set_default"),
+                      "Set as default",
+                      class = "btn btn-info"
+                    ) |>
+                      bslib::tooltip(
+                        "Set this prompt as the default for future sessions.",
+                        placement = "bottom"
+                      )
                   )
                 )
               )
             )
           ),
-          size = "l", easyClose = TRUE
+          size = "l",
+          easyClose = TRUE
         )
       )
 
@@ -256,7 +287,9 @@ editPromptModuleServer <- function(
           current_prompt(preselect_value)
         } else {
           # maybe predefined
-          pd_names <- names(predefined_prompts)[predefined_prompts == preselect_value]
+          pd_names <- names(predefined_prompts)[
+            predefined_prompts == preselect_value
+          ]
           if (length(pd_names)) {
             current_name(pd_names[1])
             typed_name(pd_names[1])
@@ -273,7 +306,11 @@ editPromptModuleServer <- function(
       # Update inputs
       shiny::updateTextInput(session, "prompt_name", value = typed_name())
       shinyjs::disable("prompt_name")
-      shiny::updateTextAreaInput(session, "prompt_text", value = current_prompt())
+      shiny::updateTextAreaInput(
+        session,
+        "prompt_text",
+        value = current_prompt()
+      )
 
       # By default, name is disabled until user clicks "Edit Name"
       editing_name(FALSE)
@@ -285,10 +322,20 @@ editPromptModuleServer <- function(
     shiny::observe({
       # If editing_name() is TRUE => "Save Name" and enable
       if (editing_name()) {
-        shiny::updateActionButton(session, "toggle_name_btn", label = "Save", icon = shiny::icon("save"))
+        shiny::updateActionButton(
+          session,
+          "toggle_name_btn",
+          label = "Save",
+          icon = shiny::icon("save")
+        )
         shinyjs::enable("prompt_name")
       } else {
-        shiny::updateActionButton(session, "toggle_name_btn", label = "Edit", icon = shiny::icon("pencil"))
+        shiny::updateActionButton(
+          session,
+          "toggle_name_btn",
+          label = "Edit",
+          icon = shiny::icon("pencil")
+        )
         shinyjs::disable("prompt_name")
       }
     })
@@ -306,7 +353,10 @@ editPromptModuleServer <- function(
         # We are going from "Edit Name" -> "Save Name"
         # If it's a predefined prompt, disallow rename
         if (current_name() %in% names(predefined_prompts)) {
-          shiny::showNotification("Cannot rename a predefined prompt.", type = "error")
+          shiny::showNotification(
+            "Cannot rename a predefined prompt.",
+            type = "error"
+          )
           return()
         }
         editing_name(TRUE)
@@ -317,7 +367,10 @@ editPromptModuleServer <- function(
 
         # If user tries to keep "New Prompt" as final name, not allowed
         if (new_name == "New Prompt") {
-          shiny::showNotification("Please choose a different name (cannot use 'New Prompt').", type = "error")
+          shiny::showNotification(
+            "Please choose a different name (cannot use 'New Prompt').",
+            type = "error"
+          )
           return()
         }
 
@@ -327,14 +380,22 @@ editPromptModuleServer <- function(
         # If new_name is already used by a different user-defined prompt
         if (new_name %in% names(ud) && new_name != old_name) {
           shiny::showNotification(
-            paste0("Name '", new_name, "' already exists. Please choose a unique name."),
+            paste0(
+              "Name '",
+              new_name,
+              "' already exists. Please choose a unique name."
+            ),
             type = "error"
           )
           return()
         }
 
         # Cannot rename to a name that is in predefined
-        if (new_name %in% names(predefined_prompts) && !(old_name %in% names(predefined_prompts))) {
+        if (
+          new_name %in%
+            names(predefined_prompts) &&
+            !(old_name %in% names(predefined_prompts))
+        ) {
           shiny::showNotification(
             paste0("Name '", new_name, "' conflicts with a predefined prompt."),
             type = "error"
@@ -366,18 +427,35 @@ editPromptModuleServer <- function(
         # If we want to always refresh, we can do so unconditionally:
         choice_vec <- c("New prompt..." = "")
         if (length(predefined_prompts)) {
-          choice_vec <- c(choice_vec, stats::setNames(unname(predefined_prompts), names(predefined_prompts)))
+          choice_vec <- c(
+            choice_vec,
+            stats::setNames(
+              unname(predefined_prompts),
+              names(predefined_prompts)
+            )
+          )
         }
         if (length(user_prompts())) {
           ups_now <- user_prompts()
-          choice_vec <- c(choice_vec, stats::setNames(unname(ups_now), names(ups_now)))
+          choice_vec <- c(
+            choice_vec,
+            stats::setNames(unname(ups_now), names(ups_now))
+          )
         }
         # selected = user_prompts()[[new_name]] if it exists, else current prompt
         sel_text <- ud[[new_name]] %||% current_prompt()
-        shiny::updateSelectInput(session, "prompt_selector", choices = choice_vec, selected = sel_text)
+        shiny::updateSelectInput(
+          session,
+          "prompt_selector",
+          choices = choice_vec,
+          selected = sel_text
+        )
 
         editing_name(FALSE)
-        shiny::showNotification(paste("Name updated to:", new_name), type = "message")
+        shiny::showNotification(
+          paste("Name updated to:", new_name),
+          type = "message"
+        )
       }
     })
 
@@ -416,7 +494,11 @@ editPromptModuleServer <- function(
 
       # Update the UI fields
       shiny::updateTextInput(session, "prompt_name", value = typed_name())
-      shiny::updateTextAreaInput(session, "prompt_text", value = current_prompt())
+      shiny::updateTextAreaInput(
+        session,
+        "prompt_text",
+        value = current_prompt()
+      )
 
       editing_name(FALSE)
     })
@@ -439,10 +521,18 @@ editPromptModuleServer <- function(
     #=========================
     shiny::observeEvent(input$use_temp, {
       if (current_prompt() == input$prompt_text) {
-        shiny::showNotification("No changes made to current prompt.", duration = 2.5, type = "message")
+        shiny::showNotification(
+          "No changes made to current prompt.",
+          duration = 2.5,
+          type = "message"
+        )
       } else {
         current_prompt(input$prompt_text)
-        shiny::showNotification("Current prompt updated.", duration = 2.5, type = "message")
+        shiny::showNotification(
+          "Current prompt updated.",
+          duration = 2.5,
+          type = "message"
+        )
       }
       shiny::removeModal()
     })
@@ -459,20 +549,22 @@ editPromptModuleServer <- function(
       functions = c("bindModalClose")
     )
 
-
     # Bind modal close event on modal creation
     shiny::observeEvent(input$open_modal, {
-      shinyjs::runjs(sprintf("shinyjs.bindModalClose('%s');", ns("open_modal_modal")))
+      shinyjs::runjs(
+        sprintf("shinyjs.bindModalClose('%s');", ns("open_modal_modal"))
+      )
     })
 
     # Detect modal dismissal
     shiny::observeEvent(input$open_modal_modal_closed, {
       if (current_prompt() == input$prompt_text) {
-        shiny::showNotification("No changes made to current prompt.", type = "message")
+        shiny::showNotification(
+          "No changes made to current prompt.",
+          type = "message"
+        )
       }
     })
-
-
 
     #=========================
     # Save (prompt text)
@@ -483,13 +575,19 @@ editPromptModuleServer <- function(
 
       # Disallow saving under the name "New Prompt"
       if (nm == "New Prompt") {
-        shiny::showNotification("Cannot save with the name 'New Prompt'. Please choose a different name.", type = "error")
+        shiny::showNotification(
+          "Cannot save with the name 'New Prompt'. Please choose a different name.",
+          type = "error"
+        )
         return()
       }
 
       # If prompt text is empty, warn the user
       if (!nzchar(txt)) {
-        shiny::showNotification("Prompt text is empty. Cannot save an empty prompt.", type = "warning")
+        shiny::showNotification(
+          "Prompt text is empty. Cannot save an empty prompt.",
+          type = "warning"
+        )
         return()
       }
 
@@ -497,11 +595,21 @@ editPromptModuleServer <- function(
       if (nm %in% names(predefined_prompts)) {
         # If text differs from the official predefined text, revert
         if (!identical(txt, predefined_prompts[[nm]])) {
-          shiny::showNotification("Cannot modify predefined prompt text.", type = "error")
-          shiny::updateTextAreaInput(session, "prompt_text", value = predefined_prompts[[nm]])
+          shiny::showNotification(
+            "Cannot modify predefined prompt text.",
+            type = "error"
+          )
+          shiny::updateTextAreaInput(
+            session,
+            "prompt_text",
+            value = predefined_prompts[[nm]]
+          )
           return()
         }
-        shiny::showNotification("No changes to predefined prompt.", type = "message")
+        shiny::showNotification(
+          "No changes to predefined prompt.",
+          type = "message"
+        )
         return()
       }
 
@@ -514,15 +622,26 @@ editPromptModuleServer <- function(
       # Update the dropdown options to reflect the new/updated prompt
       choice_vec <- c("New prompt..." = "")
       if (length(predefined_prompts)) {
-        choice_vec <- c(choice_vec, stats::setNames(unname(predefined_prompts), names(predefined_prompts)))
+        choice_vec <- c(
+          choice_vec,
+          stats::setNames(unname(predefined_prompts), names(predefined_prompts))
+        )
       }
       if (length(ud)) {
         choice_vec <- c(choice_vec, stats::setNames(unname(ud), names(ud)))
       }
-      shiny::updateSelectInput(session, "prompt_selector", choices = choice_vec, selected = txt)
+      shiny::updateSelectInput(
+        session,
+        "prompt_selector",
+        choices = choice_vec,
+        selected = txt
+      )
 
       current_prompt(txt)
-      shiny::showNotification(paste("Prompt text saved for:", nm), type = "message")
+      shiny::showNotification(
+        paste("Prompt text saved for:", nm),
+        type = "message"
+      )
     })
 
     #=========================
@@ -531,7 +650,10 @@ editPromptModuleServer <- function(
     shiny::observeEvent(input$delete_prompt, {
       txt <- input$prompt_text
       if (!nzchar(txt)) {
-        shiny::showNotification("No valid prompt selected to delete.", type = "warning")
+        shiny::showNotification(
+          "No valid prompt selected to delete.",
+          type = "warning"
+        )
         return()
       }
 
@@ -539,7 +661,10 @@ editPromptModuleServer <- function(
       # Find which name in user-defined has this text
       name_to_del <- names(ud)[ud == txt]
       if (!length(name_to_del)) {
-        shiny::showNotification("Cannot delete: not a user-defined prompt.", type = "warning")
+        shiny::showNotification(
+          "Cannot delete: not a user-defined prompt.",
+          type = "warning"
+        )
         return()
       }
       name_to_del <- name_to_del[1]
@@ -553,12 +678,18 @@ editPromptModuleServer <- function(
       user_prompts(ud)
       save_all()
 
-      shiny::showNotification(sprintf("User-defined prompt '%s' deleted.", name_to_del), type = "message")
+      shiny::showNotification(
+        sprintf("User-defined prompt '%s' deleted.", name_to_del),
+        type = "message"
+      )
 
       # Update dropdown choices
       choice_vec <- c("New prompt..." = "")
       if (length(predefined_prompts)) {
-        choice_vec <- c(choice_vec, stats::setNames(unname(predefined_prompts), names(predefined_prompts)))
+        choice_vec <- c(
+          choice_vec,
+          stats::setNames(unname(predefined_prompts), names(predefined_prompts))
+        )
       }
       if (length(ud)) {
         choice_vec <- c(choice_vec, stats::setNames(unname(ud), names(ud)))
@@ -575,7 +706,12 @@ editPromptModuleServer <- function(
           ""
         }
 
-        shiny::updateSelectInput(session, "prompt_selector", choices = choice_vec, selected = default_text)
+        shiny::updateSelectInput(
+          session,
+          "prompt_selector",
+          choices = choice_vec,
+          selected = default_text
+        )
         current_prompt(default_text)
         current_name(default_name)
         typed_name(default_name)
@@ -583,7 +719,12 @@ editPromptModuleServer <- function(
         shiny::updateTextInput(session, "prompt_name", value = default_name)
       } else {
         # Fallback to "New Prompt"
-        shiny::updateSelectInput(session, "prompt_selector", choices = choice_vec, selected = "")
+        shiny::updateSelectInput(
+          session,
+          "prompt_selector",
+          choices = choice_vec,
+          selected = ""
+        )
         current_prompt("")
         current_name("New Prompt")
         typed_name("New Prompt")
@@ -594,24 +735,28 @@ editPromptModuleServer <- function(
       editing_name(FALSE)
     })
 
-
-
     #=========================
     # Set Default
     #=========================
     shiny::observeEvent(input$set_default, {
       txt <- input$prompt_text
       if (!nzchar(txt)) {
-        shiny::showNotification("No prompt to set as default.", type = "warning")
+        shiny::showNotification(
+          "No prompt to set as default.",
+          type = "warning"
+        )
         return()
       }
 
       # find name from text
       ud <- user_prompts()
       matched_user <- names(ud)[ud == txt]
-      matched_pre  <- names(predefined_prompts)[predefined_prompts == txt]
+      matched_pre <- names(predefined_prompts)[predefined_prompts == txt]
       if (!length(matched_user) && !length(matched_pre)) {
-        shiny::showNotification("Prompt must be saved or be predefined before setting default.", type = "error")
+        shiny::showNotification(
+          "Prompt must be saved or be predefined before setting default.",
+          type = "error"
+        )
         return()
       }
       the_name <- if (length(matched_user)) matched_user[1] else matched_pre[1]
@@ -619,7 +764,10 @@ editPromptModuleServer <- function(
       # If already default
       all_meta <- metadata()
       if (identical(all_meta$default_prompt_name, the_name)) {
-        shiny::showNotification("This prompt is already the default.", type = "warning")
+        shiny::showNotification(
+          "This prompt is already the default.",
+          type = "warning"
+        )
         return()
       }
 
@@ -628,7 +776,10 @@ editPromptModuleServer <- function(
       save_all()
       current_prompt(txt)
 
-      shiny::showNotification(sprintf("'%s' is now the default prompt.", the_name), type = "message")
+      shiny::showNotification(
+        sprintf("'%s' is now the default prompt.", the_name),
+        type = "message"
+      )
     })
 
     #=========================
